@@ -1,2 +1,5 @@
 pyomo
 matplotlib
+numpy
+scipy
+pandas

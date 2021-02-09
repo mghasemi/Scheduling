@@ -1,23 +1,37 @@
+"""
+===============================
+Visualization Module
+===============================
+"""
+
+
 class Visuals(object):
     """
     A class to visualize an schedule. An instance of `Visuals` accepts one argument:
+
     :param schedule: An instance of `Schedule`.
     """
+
     def __init__(self, schedule):
         # if not isinstance(schedule, Schedule):
         #     raise TypeError("'schedule' must be an instance of 'Schedule'")
         self.schedule = schedule
+        self.weights = list(
+            set([self.schedule.timetable[_]['weight'] for _ in self.schedule.timetable if _ != 'Message']))
+        self.weights.sort()
+        self.colors = ['red', 'lime', 'violet', 'orange', 'blue']
 
-    def gantt(self):
+    def gantt(self, **kwargs):
         """
         Plots a gantt chart of the given schedule
+
         :return: the `matplotlib` plot object
         """
         import matplotlib.gridspec as gridspec
         import matplotlib.pyplot as plt
 
         if (self.schedule.timetable == {}) or (
-            self.schedule.timetable["Message"] != "Success"
+                self.schedule.timetable["Message"] != "Success"
         ):
             # raise ValueError("No schedule found for visualization")
             print("No schedule found for visualization")
@@ -48,24 +62,26 @@ class Visuals(object):
                 [idx - bw, idx - bw],
                 [idx + bw, idx + bw],
                 color="cyan",
-                alpha=0.6,
+                alpha=0.3,
             )
             try:
                 x = self.schedule.timetable[j]["start"]
                 y = self.schedule.timetable[j]["finish"]
+                w8 = self.schedule.timetable[j]["weight"]
             except KeyError:
                 self.schedule.timetable[j] = dict()
                 self.schedule.timetable[j]["start"] = jobs[j]["release"]
                 y = self.schedule.timetable[j]["finish"] = jobs[j]["release"]
                 x = jobs[j]["release"]
                 y = x
+                w8 = jobs[j]["weight"]
             if self.schedule.tasks.TaskKeys[j] == "Unavailable":
                 task_name = "NA"
                 clr = "grey"
             else:
                 # task_name = "Task " + str(self.tasks.TaskKeys[j])
                 task_name = str(self.schedule.tasks.TaskKeys[j])
-                clr = "red"
+                clr = self.colors[self.weights.index(w8)]  # "red"
             axes_1.fill_between(
                 [x, y], [idx - bw, idx - bw], [idx + bw, idx + bw], color=clr, alpha=0.5
             )
@@ -76,8 +92,8 @@ class Visuals(object):
             )
             axes_1.text(
                 (
-                    self.schedule.timetable[j]["start"]
-                    + self.schedule.timetable[j]["finish"]
+                        self.schedule.timetable[j]["start"]
+                        + self.schedule.timetable[j]["finish"]
                 )
                 / 2.0,
                 idx,
@@ -91,12 +107,12 @@ class Visuals(object):
 
         # axes_1.set_ylim(-0.5, idx - 0.5)
         axes_1.set_ylim(-0.5, len(set(self.schedule.tasks.TaskKeys)) - 0.5)
-        axes_1.set_title("Task Schedule")
-        axes_1.set_xlabel("Time")
-        axes_1.set_ylabel("Tasks")
+        axes_1.set_title(kwargs.get('Title', "Task Schedule"))
+        axes_1.set_xlabel(kwargs.get('xlabel', "Time"))
+        axes_1.set_ylabel(kwargs.get('ylabel', "Tasks"))
         axes_1.set_yticks(
             range(len(list(self.schedule.tasks.TaskKeys)) + 1),
-            #set(self.schedule.tasks.TaskKeys),
+            # set(self.schedule.tasks.TaskKeys),
         )
         axes_1.grid()
         xlim = axes_1.get_xlim()
@@ -110,18 +126,19 @@ class Visuals(object):
 
         axes_2 = plt.subplot(graph[3, :])
         for j in sorted(jobs.keys()):
-            #if self.schedule.tasks.TaskKeys[j] == "Unavailable":
+            # if self.schedule.tasks.TaskKeys[j] == "Unavailable":
             #    continue
             idx = Equipments.index(self.schedule.timetable[j]["resources"])
             x = self.schedule.timetable[j]["start"]
             y = self.schedule.timetable[j]["finish"]
+            w8 = self.schedule.timetable[j]["weight"]
             if self.schedule.tasks.TaskKeys[j] == "Unavailable":
                 task_name = "NA"
                 clr = "grey"
             else:
                 # task_name = "Task " + str(self.tasks.TaskKeys[j])
                 task_name = str(self.schedule.tasks.TaskKeys[j])
-                clr = "red"
+                clr = self.colors[self.weights.index(w8)]  # "red"
             axes_2.fill_between(
                 [x, y], [idx - bw, idx - bw], [idx + bw, idx + bw], color=clr, alpha=0.5
             )
@@ -132,8 +149,8 @@ class Visuals(object):
             )
             axes_2.text(
                 (
-                    self.schedule.timetable[j]["start"]
-                    + self.schedule.timetable[j]["finish"]
+                        self.schedule.timetable[j]["start"]
+                        + self.schedule.timetable[j]["finish"]
                 )
                 / 2.0,
                 idx,
@@ -145,9 +162,9 @@ class Visuals(object):
             )
         axes_2.set_xlim(xlim)
         axes_2.set_ylim(-0.5, len(Equipments) - 0.5)
-        axes_2.set_title("Resource Schedule")
-        axes_2.set_yticks(range(len(Equipments)))#, Equipments)
-        axes_2.set_ylabel("resources")
+        axes_2.set_title(kwargs.get('Subtitle', "Resource Schedule"))
+        axes_2.set_yticks(range(len(Equipments)))  # , Equipments)
+        axes_2.set_ylabel(kwargs.get('Resource', "resources"))
         axes_2.grid()
 
         plt.tight_layout()
