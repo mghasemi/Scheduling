@@ -1,5 +1,6 @@
 pyomo
 matplotlib
-numpy
+numpy~=1.19.1
 scipy
-pandas
+pandas~=1.1.5
+joblib

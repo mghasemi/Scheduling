@@ -650,6 +650,8 @@ class Preemptive(object):
         tasks_copy = copy(tasks)
         for _ in tasks_copy.Tasks:
             tasks_copy.Tasks[_]['start'] = tasks_copy.Tasks[_]['release']
+            tasks_copy.Tasks[_]['resume'] = tasks_copy.Tasks[_]['release']
+            tasks_copy.Tasks[_]['elapsed'] = 0
             tasks_copy.Tasks[_]['working_process'] = tasks_copy.Tasks[_]['process']
             tasks_copy.Tasks[_]['answered'] = 0
             tasks_copy.Tasks[_]['preempted'] = 0
@@ -659,84 +661,35 @@ class Preemptive(object):
         self.resource_available_at = [[self.min_start, self.tasks.Resources[_]] for _ in range(self.num_resources)]
         self.agent_task = {_: None for _ in self.tasks.Resources}
         self.agents_queue = {_: [] for _ in self.tasks.Resources}
+        self.agents_order = [_ for _ in self.tasks.Resources]
         self.queue = []
         self.timetable = {}
 
-    def sort_queue(self):
-        """
-        Sorts current calls queue
-        """
-        srt = lambda x: (x['start'], -x['weight'], x['release'])
-        self.queue.sort(key=srt)
-
-    def in_queue(self, t):
-        """
-        Finds the list of unanswered calls available at the `current_time`
-        """
+    def tasks_available_at(self, t):
+        avail = []
         for tsk in self.tasks_list:
-            if (tsk['release'] <= t) and (tsk['answered'] == 0):
-                self.queue.append(tsk)
+            if tsk['release'] <= t and tsk['answered'] == 0:
+                avail.append(tsk)
+        return avail
 
-    def answer(self, agent, tsk):
-        """
-        Marks the call as answered and associates the agent to the call,
-        adds the call to the agent's queue.
-        """
-        tsk['answered'] = 1
-        tsk['agent'] = agent
-        tsk['start'] = self.current_time
-        self.agents_queue[agent].insert(0, tsk)
-        self.agents_queue[agent].sort(key=lambda x: -x['weight'])
-        return tsk
+    def sort_tasks(self, tasks):
+        order = lambda x: (-x['weight'], x['release'])
+        tasks.sort(key=order)
+        return tasks
 
-    def clear_agent_queues(self):
-        """
-        Clear ongoing calls from agents queue if the duration is over,
-        append it to the timetable
-        """
-        for agent in self.agents_queue:
-            idx = 0
-            for tsk in self.agents_queue[agent]:
-                task = None
-                if tsk['start'] + tsk['working_process'][agent] <= self.current_time:
-                    self.timetable[tsk['id']] = dict(start=tsk['start'],
-                                                     release=self.tasks.Tasks[tsk['id']]['release'],
-                                                     finish=self.current_time,
-                                                     resources=agent,
-                                                     weight=tsk['weight'],
-                                                     actual_process=tsk['process'][agent])
-                    task = self.agents_queue[agent].pop(idx)
-                if task is None:
-                    idx += 1
+    def sort_agents(self):
+        # TODO: remove extra sorting heare if redundant
+        agent_tasks = [(_, self.sort_tasks(self.agents_queue[_])) for _ in self.tasks.Resources]
+        order = lambda x: (len(x[1]), x[1][0]['weight'] if x[1] else -1000)
+        agent_tasks.sort(key=order)
+        return agent_tasks
 
-    def sort_agents_queue(self):
-        """
-        Sort agents' queue based on number of tasks first and then priority of the ongoing task (the first item of the list)
-        """
-        o_agent_queues = [(_, self.agents_queue[_]) for _ in self.agents_queue]
-        # pprint(o_agent_queues)
-        o_agent_queues.sort(key=lambda x: (len(x[1]), x[1][0]['weight'] if x[1] else 0))
-        return o_agent_queues
-
-    def assign_call_to_agent(self, task, agent):
-        """
-        Assigns the call to an agent and marks the call as associated and answere,
-        updates the agent's availability
-        """
-        # self.answer(agent, task)
-        for idx in range(len(self.resource_available_at)):
-            pair = self.resource_available_at[idx]
-            if pair[1] == agent:
-                self.answer(agent, task)
-                self.resource_available_at[idx][0] = self.current_time + task['working_process'][agent]
-                break
-
-    def preempt(self, agent, duration):
-        """
-        Adjust the duration of existing calls in `agent`'s queue for preemption
-        """
-        for idx in range(len(self.agents_queue[agent])):
-            self.agents_queue[agent][idx]['working_process'][agent] += duration
+    def answer(self, agent, task):
+        task['answered'] = 1
+        task['start'] = self.current_time
+        task['resume'] = self.current_time
+        task['agent'] = agent
+        return task
 
     def unanswered(self):
         """
@@ -747,52 +700,77 @@ class Preemptive(object):
                 return True
         return False
 
-    def finalize(self):
-        for agent in self.tasks.Resources:
-            while self.agents_queue[agent]:
-                tsk = self.agents_queue[agent].pop(0)
-                self.timetable[tsk['id']] = dict(start=tsk['start'],
-                                                 release=self.tasks.Tasks[tsk['id']]['release'],
-                                                 finish=tsk['start'] + tsk['working_process'][agent],
-                                                 actual_process=tsk['process'][agent],
-                                                 resources=agent,
-                                                 weight=tsk['weight'])
-        self.timetable["Message"] = "Success"
+    def busy_agent(self):
+        for _ in self.agents_queue:
+            if self.agents_queue[_]:
+                return True
+        return False
+
+    def assign_task(self, agent, task):
+        # TODO: sort needed?
+        self.agents_queue[agent] = self.sort_tasks(self.agents_queue[agent])
+        if not self.agents_queue[agent]:
+            tsk = self.answer(agent, task)
+            self.agents_queue[agent].append(task)
+        else:
+            if (self.agents_queue[agent][0]['weight'] < task['weight']) and (
+                    self.current_time - task['release']) > self.queue_wait:
+                tsk = self.answer(agent, task)
+                a_n = len(self.agents_queue[agent])
+                for i in range(a_n):
+                    tmp_tsk = self.agents_queue[agent][i]
+                    tmp_tsk['working_process'] = {_: tmp_tsk['working_process'][_] + task['process'][_] for _ in
+                                                  task['process']}
+                    if tmp_tsk['preempted'] == 0:
+                        tmp_tsk['elapsed'] += self.current_time - tmp_tsk['resume']
+                        tmp_tsk['preempted'] = 1
+                    self.agents_queue[agent][i] = tmp_tsk
+                self.agents_queue[agent].insert(0, tsk)
+            else:
+                tsk = None
+        return tsk
+
+    def refresh_agents_queue(self, agent):
+        if not self.agents_queue[agent]:
+            return
+        tsk = self.agents_queue[agent][0]
+        tsk['elapsed'] += self.current_time - tsk['resume']
+        tsk['resume'] = self.current_time
+        # Task is done:
+        if tsk['elapsed'] >= tsk['process'][agent]:
+            tsk['end'] = self.current_time
+            self.timetable[tsk['id']] = dict(start=tsk['start'],
+                                             release=self.tasks.Tasks[tsk['id']]['release'],
+                                             finish=self.current_time,
+                                             resources=agent,
+                                             weight=tsk['weight'],
+                                             actual_process=tsk['process'][agent])
+            self.agents_queue[agent].pop(0)
+            if self.agents_queue[agent]:
+                self.agents_queue[agent][0]['preempted'] = 0
+                self.agents_queue[agent][0]['resume'] = self.current_time
+        return
+
+    def clear_agents(self):
+        for _ in self.agents_queue:
+            self.refresh_agents_queue(_)
 
     def __call__(self, *args, **kwargs):
         while self.unanswered():
-            self.in_queue(self.current_time)
-            self.sort_queue()
-            idx = 0
-            # Clear completed calls from agents' queues
-            # Process calls in the queue at the moment
-            for tsk in self.queue:
-                popped = None
-                # Look for free agents
-                for agent in self.tasks.Resources:
+            self.clear_agents()
+            tasks = self.tasks_available_at(self.current_time)
+            tasks = self.sort_tasks(tasks)
+            for tsk in tasks:
+                sorted_agents = self.sort_agents()
+                for agent, _ in sorted_agents:
                     if agent not in tsk['process']:
                         continue
-                    if not self.agents_queue[agent]:
-                        self.assign_call_to_agent(tsk, agent)
-                        popped = tsk
+                    assigned = self.assign_task(agent, tsk)
+                    if assigned:
                         break
-                # If the call is not answered yet
-                if popped is None:
-                    # Check if the minimum wait period is passed
-                    if self.current_time - tsk['release'] >= self.queue_wait:
-                        weight = tsk['weight']
-                        # check for agents that are bussy with lower priority calls
-                        sorted_agent_queues = self.sort_agents_queue()
-                        for agent, q in sorted_agent_queues:
-                            if agent not in tsk['process']:
-                                continue
-                            if q[0]['weight'] < weight:
-                                duration = tsk['process'][agent]
-                                self.preempt(agent, duration)
-                                self.assign_call_to_agent(tsk, agent)
-            self.clear_agent_queues()
-            self.queue = []
             self.current_time += self.step
-            self.sort_queue()
-        self.finalize()
+        while self.busy_agent():
+            self.clear_agents()
+            self.current_time += self.step
+        self.timetable["Message"] = "Success"
         return self.timetable

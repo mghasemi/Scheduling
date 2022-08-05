@@ -10,7 +10,7 @@ The ASAs and Utilization are as below:
     :align: center
     :name: asa_fcfs_4
 
-.. figure:: ./images/utilization_fcfs_4.png
+.. figure:: ./images/util_fcfs_4.png
     :width: 100%
     :align: center
     :name: util_fcfs_4
@@ -20,7 +20,7 @@ The ASAs and Utilization are as below:
     :align: center
     :name: asa_fcfs_5
 
-.. figure:: ./images/utilization_fcfs_5.png
+.. figure:: ./images/util_fcfs_5.png
     :width: 100%
     :align: center
     :name: util_fcfs_5
@@ -30,7 +30,7 @@ The ASAs and Utilization are as below:
     :align: center
     :name: asa_fcfs_6
 
-.. figure:: ./images/utilization_fcfs_6.png
+.. figure:: ./images/util_fcfs_6.png
     :width: 100%
     :align: center
     :name: util_fcfs_6
@@ -40,7 +40,7 @@ The ASAs and Utilization are as below:
     :align: center
     :name: asa_fcfs_7
 
-.. figure:: ./images/utilization_fcfs_7.png
+.. figure:: ./images/util_fcfs_7.png
     :width: 100%
     :align: center
     :name: util_fcfs_7
@@ -50,7 +50,7 @@ The ASAs and Utilization are as below:
     :align: center
     :name: asa_fcfs_8
 
-.. figure:: ./images/utilization_fcfs_8.png
+.. figure:: ./images/util_fcfs_8.png
     :width: 100%
     :align: center
     :name: util_fcfs_8
@@ -60,7 +60,7 @@ The ASAs and Utilization are as below:
     :align: center
     :name: asa_fcfs_9
 
-.. figure:: ./images/utilization_fcfs_9.png
+.. figure:: ./images/util_fcfs_9.png
     :width: 100%
     :align: center
     :name: util_fcfs_9
@@ -70,7 +70,7 @@ The ASAs and Utilization are as below:
     :align: center
     :name: asa_fcfs_10
 
-.. figure:: ./images/utilization_fcfs_10.png
+.. figure:: ./images/util_fcfs_10.png
     :width: 100%
     :align: center
     :name: util_fcfs_10
@@ -80,7 +80,7 @@ The ASAs and Utilization are as below:
     :align: center
     :name: asa_fcfs_11
 
-.. figure:: ./images/utilization_fcfs_11.png
+.. figure:: ./images/util_fcfs_11.png
     :width: 100%
     :align: center
     :name: util_fcfs_11

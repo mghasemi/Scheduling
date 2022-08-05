@@ -12,9 +12,10 @@ Welcome to PCB-Evaluation Workload's documentation!
 
    intro
    perimeter
-   code
    appendix_a
    appendix_b
+   appendix_c
+   code
 
 
 

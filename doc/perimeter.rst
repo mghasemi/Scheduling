@@ -158,12 +158,12 @@ the above assumption.
 Stochastic Schedule Analysis
 -----------------------------------
 Now, we use the above information and processes to generate random calls with different
-priorities for various time slots. We also assume that each evaluator takes a 2-8 minutes
-**break** per 30 minutes time slot.
+priorities for various time slots. We also assume that each evaluator takes a 2 to 8
+minutes **break** per 30 minutes time slot.
 
-To get a more realistic idea about the workloads and performances, we generate 10 random
-scenarios per time slot for 3 and 4 evaluators. A typical optimal schedule looks like
-:numref:`typical-schedule`
+To get a more realistic idea about the workloads and performances, we generate 50
+random scenarios per time slot for 3 and 4 evaluators. A typical optimal schedule looks
+like :numref:`typical-schedule`.
 
 .. figure:: ./images/15-4.png
     :width: 50%
@@ -172,69 +172,134 @@ scenarios per time slot for 3 and 4 evaluators. A typical optimal schedule looks
 
     An optimal schedule for 4 evaluators
 
-Preliminary Results
-----------------------
-In this section we present the outcomes regarding the ASAs for various models with different
-number of evaluators in place for all 48 time-slots.
+Preliminary Results on Staffing
+---------------------------------
+The preemptive model was run over the simulated data for all 48 timeslots with different
+number of evaluators in place. This simulation was repeated 50 times to measure the ASAs,
+Utilization, and their corresponding 95% confidence intervals.
+:numref:`min_res` shows the minimum number of evaluators required to achieve Emergency
+ASA below 2 seconds, the corresponding Non-emergency ASA, their 95% upper bound, and
+the average expected utilization.
 
---------------------------------------
-Absolute Optimal
---------------------------------------
-The preliminary analysis shows that with 3 evaluators at work the emergency ASA could go
-as high as 6.3 seconds (with 95% confidence interval :math:`[0, 15,5]`).
-The maximum utilization of evaluators on average is 77.8%
-(95% confidence interval :math:`[64.9, 90.8]`).
+.. table:: Minimum Required Resource
+    :name: min_res
 
-With 4 evaluators, the maximum emergency ASA is 2.75 seconds (95% confidence
-interval :math:`[0, 6.9]`). The maximum utilization is 65.3% (with 95% confidence
-interval :math:`[51.9, 78.7]`).
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |Index|Timeslot|Minimum| ASA  |ASA Upper|Non-EM-ASA|Upper Bound|Utilization|
+    +=====+========+=======+======+=========+==========+===========+===========+
+    |    0|00:00   |      8|0.9807|   1.8733|    8.4709|    23.3209|      49.70|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |    1|00:30   |      8|0.5154|   0.5663|    1.0950|     2.2133|      43.72|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |    2|01:00   |      8|0.6467|   0.9103|    2.0294|     4.4187|      44.77|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |    3|01:30   |      5|1.9684|   3.6591|   15.0067|    31.4791|      57.80|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |    4|02:00   |      8|0.6461|   1.0077|    0.6163|     0.9394|      37.26|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |    5|02:30   |      5|1.3391|   2.7579|    2.9601|     5.2445|      53.33|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |    6|03:00   |      6|0.3831|   0.4748|    0.7258|     1.1058|      38.82|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |    7|03:30   |      5|1.3210|   2.4955|    3.2139|     6.3450|      46.35|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |    8|04:00   |      5|0.5732|   0.7032|    1.1280|     2.0734|      39.54|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |    9|04:30   |      5|0.7653|   1.3828|    2.0961|     4.4098|      40.38|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   10|05:00   |      4|0.7523|   1.0860|    2.3083|     4.0776|      41.63|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   11|05:30   |      4|0.8881|   1.3145|    7.3983|    16.9285|      49.96|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   12|06:00   |      4|1.9951|   4.6979|    5.1747|    11.5476|      45.52|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   13|06:30   |      4|1.1180|   2.2454|    3.0685|     5.3090|      47.89|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   14|07:00   |      5|0.5518|   0.6643|    2.5639|     4.8813|      49.89|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   15|07:30   |      5|0.5767|   0.7251|    3.0594|     5.3394|      48.16|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   16|08:00   |      9|0.4962|   0.5992|    0.4975|     0.5318|      45.14|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   17|08:30   |      8|0.5317|   0.6946|    3.6832|     6.6077|      56.70|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   18|09:00   |      9|1.1273|   2.2669|    3.8138|     8.1027|      56.02|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   19|09:30   |      9|0.5828|   0.7383|    8.1237|    15.4273|      62.23|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   20|10:00   |     10|1.3839|   2.6395|   13.8913|    30.8402|      61.99|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   21|10:30   |     10|0.5943|   0.7261|    5.8964|    13.8142|      60.86|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   22|11:00   |     12|0.5230|   0.6483|    0.4923|     0.5156|      48.56|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   23|11:30   |     10|0.5073|   0.6291|    4.1672|     6.9196|      63.48|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   24|12:00   |      9|1.5881|   3.4937|   13.9806|    25.3669|      71.08|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   25|12:30   |     12|0.5949|   0.7558|    1.7774|     3.4218|      54.70|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   26|13:00   |     12|0.4850|   0.6122|    2.1081|     4.9460|      56.79|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   27|13:30   |     13|0.6054|   0.7224|    6.3373|    14.6660|      56.09|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   28|14:00   |     12|0.9037|   1.8848|    2.9823|     6.9839|      56.71|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   29|14:30   |     12|1.3013|   2.9203|    7.3702|    17.0771|      57.41|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   30|15:00   |     13|0.5163|   0.6589|    0.6311|     0.9411|      51.74|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   31|15:30   |     12|0.8237|   1.4580|    6.8628|    13.9997|      61.35|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   32|16:00   |     14|0.8067|   1.4152|    3.5954|     7.5356|      56.08|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   33|16:30   |     13|0.8675|   1.7568|    4.4680|    11.1452|      54.03|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   34|17:00   |     12|1.7370|   4.1529|    7.8506|    18.7565|      58.15|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   35|17:30   |     11|1.4980|   3.2992|   19.5509|    42.6512|      64.28|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   36|18:00   |     12|0.9937|   1.6129|    4.0630|     8.6971|      55.11|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   37|18:30   |     11|0.4735|   0.5577|    2.1979|     4.6018|      53.69|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   38|19:00   |     11|0.5539|   0.6366|    3.3152|     9.0017|      49.84|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   39|19:30   |     10|0.5288|   0.6070|    2.8375|     5.5163|      54.01|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   40|20:00   |     11|1.7888|   4.2986|    4.9194|    12.7403|      53.02|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   41|20:30   |     10|1.3010|   2.5268|    8.5427|    20.5821|      53.12|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   42|21:00   |     10|0.5259|   0.6375|    8.4066|    19.2426|      57.51|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   43|21:30   |     10|0.7358|   1.2307|    3.2608|     6.6859|      49.57|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   44|22:00   |      9|0.5941|   0.6983|    1.6726|     3.6633|      54.61|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   45|22:30   |      7|1.3112|   2.2735|   15.5813|    29.5775|      63.09|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   46|23:00   |      8|0.8151|   1.1752|    2.5183|     4.5128|      54.50|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
+    |   47|23:30   |      8|1.6981|   3.0315|    7.2277|    14.3897|      54.46|
+    +-----+--------+-------+------+---------+----------+-----------+-----------+
 
-.. note::
-    Due to limitation on the processing, we
-    only consider time intervals with low volume of calls (5:00 am to 8:00 am).
-    Moreover, we run the schedule optimization for at most 5 minutes.
+Abandoned Calls
+--------------------
+Next we look at the percentage of non-emergency calls that were dropped without being
+answered by an evaluator.
+Clearly, if the calls were answered immediately, none of them would be abandoned.
+Therefore, it is reasonable to assume that non-emergency ASA has a positive impact on
+the number of abandoned calls and hence proportion of abandoned calls to all presented
+calls.
 
-The Average Speed of Answering the calls for both emergency and non-emergency are
-illustrated below with 3 and 4 evaluators and 95% confidence intervals
-(:numref:`evals3` & :numref:`evals4`):
-
-
-.. figure:: ./images/evals3.png
-    :width: 70%
+.. figure:: ./images/nasa_abond.png
+    :width: 90%
     :align: center
-    :name: evals3
+    :name: abndnd
 
-    ASA for emergency and non-emergency with 3 evaluators
+    Correlation between non-emergency ASA and proportion of abandoned calls
 
-.. figure:: ./images/evals4.png
-    :width: 70%
-    :align: center
-    :name: evals4
-
-    ASA for emergency and non-emergency with 4 evaluators
-
-The amount of time each agent spent on calls on average is :numref:`utilization`
-illustrated below with lines indicating 95% confidence intervals.
-
-.. figure:: ./images/utilization.png
-    :width: 70%
-    :align: center
-    :name: utilization
-
-    Utilization of Evaluators
-
-.. note::
-    The model was **only** executed for hours between 5:00 am to 8:00 am, where the
-    call volume is minimal, so the a machine with low resources can handle the
-    computational complexity of the model within a reasonable time.
-    Also, the parameters for the call duration distribution is set in a way that usually
-    generates samples that on average are longer than what is being suggested by data.
-    Therefore, the workload is slightly higher than what we may see in the actual
-    Perimeter data.
-
-.. note::
-    The model is written in *Python 3.7* following *PEP8* standards.
-    The optimization engine used for this analysis is *IBM's CPLEX*, running
-    on *UBUNTU 20.04 LTS* equipped with 24 GB memory and
-    Intel® Core™ i5-6300U CPU @ 2.40GHz × 4.
-
+:numref:`abndnd` illustrates a non-linear correlation between non-emergency ASA and
+proportion of abandoned calls. It is evident that if non-emergency ASA is kept below
+5 minutes, then the expectation of having over 30% abandoned calls is very low.
