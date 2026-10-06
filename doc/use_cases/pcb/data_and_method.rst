@@ -1,5 +1,10 @@
-Telus and Perimeter data
-==============================
+Data and method
+===============
+
+This use-case note describes how one historical study transformed aggregated
+Perimeter workload data into synthetic scheduling scenarios. It is not a
+required input format or workflow for the general-purpose scheduling API.
+
 The evaluation unit data is provided by Perimeter in 30-minutes aggregate format.
 Hence, determining the exact workload of each agent is not a straight forward task.
 Among the information in the Perimeter dataset, total duration that agents spent on calls
@@ -25,7 +30,7 @@ Example:
     time interval. :numref:`xmpl` proposes an optimal schedule that handles all
     calls given that 4 evaluators are available.
 
-.. figure:: ./images/example4agent.png
+.. figure:: ../../images/example4agent.png
     :width: 50%
     :align: center
     :name: xmpl
@@ -43,7 +48,7 @@ existing Perimeter data.
     standard deviation :math:`\sigma` is unknown. To estimate :math:`\sigma` one can
     choose either of the following solutions:
 
-      .. figure:: ./images/normal.png
+      .. figure:: ../../images/normal.png
           :width: 60%
           :align: center
 
@@ -106,14 +111,14 @@ To get an approximate idea about the workload throughout the day, let us disting
 between number of *Emergency* and *Non-Emergency* calls arriving at each 30-minutes time
 slot based on two years of Perimeter data (:numref:`emrvol` and :numref:`nemrvol`).
 
-.. figure:: ./images/emrvol.png
+.. figure:: ../../images/emrvol.png
     :width: 70%
     :align: center
     :name: emrvol
 
     Volume of incoming Emergency calls
 
-.. figure:: ./images/nemrvol.png
+.. figure:: ../../images/nemrvol.png
     :width: 70%
     :align: center
     :name: nemrvol
@@ -123,7 +128,7 @@ slot based on two years of Perimeter data (:numref:`emrvol` and :numref:`nemrvol
 A peak at the volume of calls transferred to evaluation from 911 primary :numref:`avg911`
 confirms that the perimeter data and Telus data align with each other.
 
-.. figure:: ./images/avg911.png
+.. figure:: ../../images/avg911.png
     :width: 70%
     :align: center
     :name: avg911
@@ -138,14 +143,14 @@ given 30-minutes time slot.
 The following plots (:numref:`emgdist` & :numref:`nonemgdist`) show the actual
 distributions extracted from Perimeter data.
 
-.. figure:: ./images/emgdist.png
+.. figure:: ../../images/emgdist.png
     :width: 70%
     :align: center
     :name: emgdist
 
     Distribution of incoming Emergency calls
 
-.. figure:: ./images/nonemgdist.png
+.. figure:: ../../images/nonemgdist.png
     :width: 70%
     :align: center
     :name: nonemgdist
@@ -165,7 +170,7 @@ To get a more realistic idea about the workloads and performances, we generate 5
 random scenarios per time slot for 3 and 4 evaluators. A typical optimal schedule looks
 like :numref:`typical-schedule`.
 
-.. figure:: ./images/15-4.png
+.. figure:: ../../images/15-4.png
     :width: 50%
     :align: center
     :name: typical-schedule
@@ -293,13 +298,7 @@ Therefore, it is reasonable to assume that non-emergency ASA has a positive impa
 the number of abandoned calls and hence proportion of abandoned calls to all presented
 calls.
 
-.. figure:: ./images/nasa_abond.png
-    :width: 90%
-    :align: center
-    :name: abndnd
-
-    Correlation between non-emergency ASA and proportion of abandoned calls
-
-:numref:`abndnd` illustrates a non-linear correlation between non-emergency ASA and
-proportion of abandoned calls. It is evident that if non-emergency ASA is kept below
-5 minutes, then the expectation of having over 30% abandoned calls is very low.
+The original analysis included a plot of non-emergency ASA against the proportion
+of abandoned calls; that generated image is not included in this repository. The
+reported result was a non-linear relationship, with fewer than 30% abandoned
+calls expected when non-emergency ASA remains below five minutes.

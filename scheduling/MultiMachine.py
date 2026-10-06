@@ -49,6 +49,7 @@ class MultiMachineMILP(object):
         self.solver = kwargs.get('solver', 'glpk')
         self.executable = kwargs.get('executable', None)
         self.validate = kwargs.get('validate', False)
+        self.solver_options = kwargs.get('solver_options', {})
 
     def __call__(self, *args, **kwargs):
         """
@@ -87,7 +88,7 @@ class MultiMachineMILP(object):
         self.model.ExJS = Set(
             initialize=self.model.J * self.model.S,
             dimen=2,
-            filter=lambda mdl, j, s: not (s in self.tasks.Tasks[j]["process"]),
+            filter=lambda mdl, j, s: s not in self.tasks.Tasks[j]["process"],
         )
         self.model.IneqPairs = Set(
             initialize=self.model.J * self.model.J,
@@ -153,11 +154,6 @@ class MultiMachineMILP(object):
             #    self.model.c[j, s] * (self.model.s[j] - self.tasks.Tasks[j]["release"]) for j, s in
             #    self.model.JSPairs
             # )
-            expr = sum(
-                self.model.c[j] * (self.model.s[j] - self.tasks.Tasks[j]["release"]) for j in
-                self.model.J
-            )
-            # print(expr)
             self.model.obj = Objective(
                 expr=sum(
                     self.model.c[j] * (self.model.s[j] - self.model.r[j]) for j in
@@ -226,8 +222,8 @@ class MultiMachineMILP(object):
         )
         self.model.Cns9 = Constraint(
             self.model.LeqPairs * self.model.SIneqPairs,
-            rule=lambda mdl, i, j, l, s: mdl.x[i, l]
-                                         + mdl.x[j, s]
+            rule=lambda mdl, i, j, resource_a, resource_b: mdl.x[i, resource_a]
+                                         + mdl.x[j, resource_b]
                                          + mdl.y[i, j]
                                          + mdl.y[j, i]
                                          <= 2,
@@ -241,14 +237,10 @@ class MultiMachineMILP(object):
         )
         if self.executable is None:
             solver_instance = SolverFactory(solver)
-            if solver == 'scip':
-                solver_instance.options['parallel/minthreads'] = 3
-            results = solver_instance.solve(self.model)
         else:
             solver_instance = SolverFactory(solver, executable=self.executable, validate=self.validate)
-            if solver == 'knitroampl':
-                solver_instance.options['par_numthreads'] = 4
-            results = solver_instance.solve(self.model)
+        solver_instance.options.update(self.solver_options)
+        results = solver_instance.solve(self.model)
         if results.solver.status == SolverStatus.ok:
             # print(self.model.obj())
             for j in self.model.J:
@@ -290,6 +282,7 @@ class MultiMachineQP(object):
         self.timetable = {}
         self.solver = kwargs.get('solver', 'glpk')
         self.executable = kwargs.get('executable', None)
+        self.solver_options = kwargs.get('solver_options', {})
 
     def __call__(self, *args, **kwargs):
         """
@@ -324,7 +317,7 @@ class MultiMachineQP(object):
         self.model.ExJS = Set(
             initialize=self.model.J * self.model.S,
             dimen=2,
-            filter=lambda mdl, j, s: not (s in self.tasks.Tasks[j]["process"]),
+            filter=lambda mdl, j, s: s not in self.tasks.Tasks[j]["process"],
         )
         self.model.IneqPairs = Set(
             initialize=self.model.J * self.model.J,
@@ -444,8 +437,8 @@ class MultiMachineQP(object):
         )
         self.model.Cns9 = Constraint(
             self.model.LeqPairs * self.model.SIneqPairs,
-            rule=lambda mdl, i, j, l, s: mdl.x[i, l]
-                                         + mdl.x[j, s]
+            rule=lambda mdl, i, j, resource_a, resource_b: mdl.x[i, resource_a]
+                                         + mdl.x[j, resource_b]
                                          + mdl.y[i, j]
                                          + mdl.y[j, i]
                                          <= 2,
@@ -458,10 +451,11 @@ class MultiMachineQP(object):
             rule=lambda mdl, j: mdl.s[j] == self.tasks.Tasks[j]["start"],
         )
         if self.executable is None:
-            results = SolverFactory(solver).solve(self.model)
+            solver_instance = SolverFactory(solver)
         else:
-            results = SolverFactory(solver, executable=self.executable).solve(self.model)
-        print(results)
+            solver_instance = SolverFactory(solver, executable=self.executable)
+        solver_instance.options.update(self.solver_options)
+        results = solver_instance.solve(self.model)
         if results.solver.status == SolverStatus.ok:
             for j in self.model.J:
                 self.timetable[j] = {
@@ -508,7 +502,9 @@ class ScipySchedule(object):
         return self.num_tasks * self.num_resources + (self.num_tasks + 1) * self.num_tasks + i
 
     def form_prg(self):
-        obj = lambda x, d=tuple(self.d): sum([x[self.var_e(j)] - d[j] for j in range(self.num_tasks)])
+        def obj(x, d=tuple(self.d)):
+            return sum(x[self.var_e(j)] - d[j] for j in range(self.num_tasks))
+
         eq_const = []
         ineq_const = []
         U = 1. + self.d_max - self.r_min
@@ -578,54 +574,65 @@ class ScipySchedule(object):
 
 class FCFSP(object):
     def __init__(self, tasks=None, **kwargs):
-        from copy import copy
+        from copy import deepcopy
         if tasks is None:
             from scheduling.Task import Tasks
             tasks = Tasks()
         self.tasks = tasks
-        self.min_start = min(self.tasks.Tasks[_]["release"] for _ in self.tasks.TaskIdx)
-        tasks_copy = copy(tasks)
+        self.min_start = min(
+            (self.tasks.Tasks[_]["release"] for _ in self.tasks.TaskIdx), default=0
+        )
+        tasks_copy = deepcopy(tasks)
         for _ in tasks_copy.Tasks:
             tasks_copy.Tasks[_]['new_release'] = tasks_copy.Tasks[_]['release']
         self.tasks_list = [tasks_copy.Tasks[_] for _ in tasks_copy.Tasks]
-        self.num_resources = len(self.tasks.Resources)
-        self.resource_available_at = [[self.min_start, self.tasks.Resources[_]] for _ in range(self.num_resources)]
+        self.resource_available_at = [
+            [self.min_start, resource] for resource in self.tasks.Resources
+        ]
         self.timetable = {}
 
     def sort_tasks(self):
-        srt = lambda x: (x['new_release'], -x['weight'])
-        self.tasks_list.sort(key=srt)
+        self.tasks_list.sort(key=lambda task: (task['new_release'], -task['weight']))
 
     def shift_tasks(self):
         self.resource_available_at.sort()
-        shift = self.resource_available_at[0][0]
-        for idx in range(len(self.tasks_list)):
-            self.tasks_list[idx]['new_release'] = max(self.tasks_list[idx]['new_release'], shift)
 
     def assign(self):
-        from copy import copy
         self.shift_tasks()
-        flag = False
-        idx_res = 0
-        idx_tsk = 0
-        res = copy(self.resource_available_at[idx_res])
-        while not flag:
-            res = copy(self.resource_available_at[idx_res])
-            for idx_tsk in range(len(self.tasks_list)):
-                tsk = self.tasks_list[idx_tsk]
-                if res[1] in tsk['process']:
-                    flag = True
-                    break
-            idx_res += 1
-        tsk = self.tasks_list.pop(idx_tsk)
-        self.timetable[tsk['id']] = dict(start=max(res[0], tsk['new_release']),
+        for res in self.resource_available_at:
+            task_index = next(
+                (idx for idx, task in enumerate(self.tasks_list) if res[1] in task['process']),
+                None,
+            )
+            if task_index is None:
+                continue
+            tsk = self.tasks_list.pop(task_index)
+            if 'start' in tsk:
+                start = tsk['start']
+                if start < max(res[0], tsk['new_release']):
+                    raise ValueError(
+                        "resource {!r} is not available for the fixed start of task {!r}".format(
+                            res[1], self.tasks.TaskKeys[tsk['id']]
+                        )
+                    )
+            else:
+                start = max(res[0], tsk['new_release'])
+            finish = start + tsk['process'][res[1]]
+            self.timetable[tsk['id']] = dict(start=start,
                                          release=self.tasks.Tasks[tsk['id']]['release'],
-                                         finish=(max(res[0], tsk['new_release']) + tsk['process'][res[1]]),
+                                         finish=finish,
                                          resources=res[1],
                                          weight=tsk['weight'])
-        self.resource_available_at[0][0] = (max(res[0], tsk['new_release']) + tsk['process'][res[1]])
+            res[0] = finish
+            return
+        task_name = self.tasks.TaskKeys[self.tasks_list[0]['id']]
+        raise ValueError("no resource can process task {!r}".format(task_name))
 
     def __call__(self, *args, **kwargs):
+        self.timetable = {}
+        if not self.tasks_list:
+            self.timetable["Message"] = "Success"
+            return self.timetable
         self.sort_tasks()
         while self.tasks_list:
             self.assign()
@@ -642,7 +649,9 @@ class Preemptive(object):
             from scheduling.Task import Tasks
             tasks = Tasks()
         self.tasks = tasks
-        self.min_start = min(self.tasks.Tasks[_]["release"] for _ in self.tasks.TaskIdx)
+        self.min_start = min(
+            (self.tasks.Tasks[_]["release"] for _ in self.tasks.TaskIdx), default=0
+        )
         self.end_time = max(
             (self.tasks.Tasks[_]["release"] + max(self.tasks.Tasks[_]["process"].values())) for _ in self.tasks.TaskIdx)
         self.queue_wait = queue_wait
@@ -673,15 +682,13 @@ class Preemptive(object):
         return avail
 
     def sort_tasks(self, tasks):
-        order = lambda x: (-x['weight'], x['release'])
-        tasks.sort(key=order)
+        tasks.sort(key=lambda task: (-task['weight'], task['release']))
         return tasks
 
     def sort_agents(self):
         # TODO: remove extra sorting heare if redundant
         agent_tasks = [(_, self.sort_tasks(self.agents_queue[_])) for _ in self.tasks.Resources]
-        order = lambda x: (len(x[1]), x[1][0]['weight'] if x[1] else -1000)
-        agent_tasks.sort(key=order)
+        agent_tasks.sort(key=lambda item: (len(item[1]), item[1][0]['weight'] if item[1] else -1000))
         return agent_tasks
 
     def answer(self, agent, task):

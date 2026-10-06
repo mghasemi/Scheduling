@@ -1,7 +1,7 @@
 ========================================
-Appendix C: Absolute Optimal
+Optimization results
 ========================================
-The preliminary analysis shows that with 3 evaluators at work the emergency ASA could go
+The preliminary PCB analysis showed that with 3 evaluators at work the emergency ASA could go
 as high as 6.3 seconds (with 95% confidence interval :math:`[0, 15,5]`).
 The maximum utilization of evaluators on average is 77.8%
 (95% confidence interval :math:`[64.9, 90.8]`).
@@ -20,14 +20,14 @@ illustrated below with 3 and 4 evaluators and 95% confidence intervals
 (:numref:`evals3` & :numref:`evals4`):
 
 
-.. figure:: ./images/evals3.png
+.. figure:: ../../images/evals3.png
     :width: 70%
     :align: center
     :name: evals3
 
     ASA for emergency and non-emergency with 3 evaluators
 
-.. figure:: ./images/evals4.png
+.. figure:: ../../images/evals4.png
     :width: 70%
     :align: center
     :name: evals4
@@ -37,7 +37,7 @@ illustrated below with 3 and 4 evaluators and 95% confidence intervals
 The amount of time each agent spent on calls on average is :numref:`utilization`
 illustrated below with lines indicating 95% confidence intervals.
 
-.. figure:: ./images/utilization.png
+.. figure:: ../../images/utilization.png
     :width: 70%
     :align: center
     :name: utilization
@@ -58,4 +58,3 @@ illustrated below with lines indicating 95% confidence intervals.
     The optimization engine used for this analysis is *IBM's CPLEX*, running
     on *UBUNTU 20.04 LTS* equipped with 24 GB memory and
     Intel® Core™ i5-6300U CPU @ 2.40GHz × 4.
-

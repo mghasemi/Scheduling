@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import t, sem
 
+from ._random import seeded_random
 from .MultiMachine import MultiMachineMILP, FCFSP, Preemptive
 from .Task import Tasks
 
@@ -67,7 +68,7 @@ class Evaluate(object):
 class GenerateSchedule(object):
     def __init__(self, num_res, priorities, n_calls, durations, release, due=3600):
         self.num_res = num_res
-        self.priorities = priorities
+        self.priorities = list(priorities)
         self.priorities.sort()
         self.due = due
         calls_keys = list(n_calls.keys())
@@ -77,11 +78,11 @@ class GenerateSchedule(object):
         release_keys = list(release.keys())
         release_keys.sort()
         if self.priorities != calls_keys:
-            raise Exception("'n_calls' keys do not match priorities")
+            raise ValueError("'n_calls' keys do not match priorities")
         if self.priorities != durations_keys:
-            raise Exception("'durations' keys do not match priorities")
+            raise ValueError("'durations' keys do not match priorities")
         if self.priorities != release_keys:
-            raise Exception("'release' keys do not match priorities")
+            raise ValueError("'release' keys do not match priorities")
         self.n_calls = n_calls
         self.durations = durations
         self.release = release
@@ -102,36 +103,65 @@ class GenerateSchedule(object):
         return J
 
 
-def generate_run_eval(schdl, model):
-    J = schdl()
-    if model == 'lp':
-        A = MultiMachineMILP(J, **{'solver': 'cplex', 'respect_due': False, 'priority': True,
-                                   'executable': "/opt/ibm/ILOG/CPLEX_Studio129/cplex/bin/x86-64_linux/cplex"})
-    elif model == 'fcfsp':
-        A = FCFSP(J)
-    elif model == 'preemptive':
-        A = Preemptive(J)
-    res = A()
-    asa = find_asas(res)
-    util = utilizations(res)
-    return asa, util
+def generate_run_eval(schdl, model, solver='glpk', executable=None, random_state=None):
+    if model not in {'lp', 'fcfsp', 'preemptive'}:
+        raise ValueError("model must be one of 'lp', 'fcfsp', or 'preemptive'")
+    with seeded_random(random_state):
+        J = schdl()
+        if model == 'lp':
+            A = MultiMachineMILP(
+                J, solver=solver, executable=executable, respect_due=False, priority=True
+            )
+        elif model == 'fcfsp':
+            A = FCFSP(J)
+        else:
+            A = Preemptive(J)
+        res = A()
+        asa = find_asas(res)
+        util = utilizations(res)
+        return asa, util
 
 
 class Stochastic(object):
-    def __init__(self, model='fcfsp', schdl=None, n_iter=50, n_jobs=6, ci=.95):
+    def __init__(
+        self, model='fcfsp', schdl=None, n_iter=50, n_jobs=6, ci=.95,
+        solver='glpk', executable=None, random_state=None,
+    ):
+        if schdl is None:
+            raise ValueError("schdl must be a schedule generator")
+        if n_iter < 1:
+            raise ValueError("n_iter must be at least 1")
+        if n_jobs == 0:
+            raise ValueError("n_jobs cannot be 0")
+        if not 0 < ci < 1:
+            raise ValueError("ci must be between 0 and 1")
         self.n_iter = n_iter
         self.n_jobs = n_jobs
         self.model = model
         self.schedule = schdl
-        self.priorities = schdl.priorities
+        self.priorities = list(schdl.priorities)
         self.ci = ci
+        self.solver = solver
+        self.executable = executable
+        self.random_state = random_state
 
     def __call__(self, *args, **kwargs):
         from joblib import Parallel, delayed
         perfs = {_: [] for _ in self.priorities}
         utils = []
+        seeds = np.random.default_rng(self.random_state).integers(
+            0, 2**32, size=self.n_iter, dtype=np.uint32
+        )
         res = Parallel(n_jobs=self.n_jobs)(
-            delayed(generate_run_eval)(schdl=self.schedule, model=self.model) for _ in range(self.n_iter))
+            delayed(generate_run_eval)(
+                schdl=self.schedule,
+                model=self.model,
+                solver=self.solver,
+                executable=self.executable,
+                random_state=int(seed),
+            )
+            for seed in seeds
+        )
         for pair in res:
             utils.append(sum(pair[1].values()) / len(pair[1]))
             for pr in pair[0]:

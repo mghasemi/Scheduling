@@ -4,6 +4,10 @@ Tasks Module
 ============================
 """
 
+from collections.abc import Mapping
+from math import isfinite
+from numbers import Real
+
 
 class Tasks(object):
     """
@@ -47,9 +51,19 @@ class Tasks(object):
             task_key = str(self.TaskNum)
         else:
             task_key = str(task_name)
-        jm_process = process
-        if process is None:
-            jm_process = {"M1": 1}
+        jm_process = {"M1": 1} if process is None else process
+        if not isinstance(jm_process, Mapping) or not jm_process:
+            raise ValueError("process must be a non-empty mapping of resources to durations")
+        jm_process = dict(jm_process)
+        if any(not isinstance(resource, str) or not resource for resource in jm_process):
+            raise ValueError("resource names must be non-empty strings")
+        if any(
+            not isinstance(duration, Real) or not isfinite(duration) or duration < 0
+            for duration in jm_process.values()
+        ):
+            raise ValueError("processing durations must be finite, non-negative numbers")
+        if task_key in self.TaskKeys:
+            raise ValueError("task name {!r} already exists".format(task_key))
         task_resources = set(jm_process.keys())
         self.Resources = list(set(self.Resources).union(task_resources))
         self.Tasks[self.TaskNum] = {
@@ -57,7 +71,7 @@ class Tasks(object):
             "due": due,
             "process": jm_process,
             "weight": weight,
-            "id": self.TaskNum
+            "id": self.TaskNum,
         }
         if start is not None:
             self.Tasks[self.TaskNum]["start"] = start
@@ -89,6 +103,7 @@ class Tasks(object):
             "due": due,
             "process": jm_process,
             "weight": weight,
+            "id": self.TaskNum,
         }
         if start is not None:
             self.Tasks[self.TaskNum]["start"] = start

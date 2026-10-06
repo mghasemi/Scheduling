@@ -1,23 +1,18 @@
-.. PCB-Evaluation Workload documentation master file, created by
-   sphinx-quickstart on Thu Jan 14 20:23:23 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Scheduling Toolkit
+==================
 
-Welcome to PCB-Evaluation Workload's documentation!
-===================================================
+Scheduling Toolkit is a Python library for task modeling, resource assignment,
+and scheduling strategies. This documentation starts with the general-purpose
+library. A historical PCB workload-planning application is presented separately
+as an optional use case.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Documentation
 
-   intro
-   perimeter
-   appendix_a
-   appendix_b
-   appendix_c
+   api
    code
-
-
+   use_cases/index
 
 Indices and tables
 ==================

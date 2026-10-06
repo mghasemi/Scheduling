@@ -1,6 +1,10 @@
-========================================
-Appendix
-========================================
+Call-duration assumptions
+=========================
+
+This appendix records modeling assumptions made in the PCB workload case
+study. The estimates and interpretations are study-specific and should be
+validated before being reused with other data.
+
 The Perimeter data provides data on aggregate level which only includes very few pieces of
 information regarding the duration of individual calls. We made a decision to assume that
 the duration of calls follow a *truncated normal* distribution which in general is a
@@ -19,7 +23,7 @@ of the outcome is subject to further debates.
 For the emergency calls, the :numref:`emr911` resembles a :math:`\Gamma` distribution that
 itself can be roughly approximated as a *truncated normal distribution*.
 
-.. figure:: ./images/emr_dur_dist.png
+.. figure:: ../../images/emr_dur_dist.png
     :width: 70%
     :align: center
     :name: emr911
@@ -30,7 +34,7 @@ Similarly, the kernel density of the duration of calls transferred to *780944367
 given in :numref:`nonemr911`. This, again resembles a :math:`\Gamma` distribution
 that we approximate by a truncated normal.
 
-.. figure:: ./images/nemr_dur_dist.png
+.. figure:: ../../images/nemr_dur_dist.png
     :width: 70%
     :align: center
     :name: nonemr911
@@ -46,7 +50,7 @@ is not noticeable.
 The density of duration for synthetic non-emergency calls is illustrated
 in :numref:`nonemr_synth`
 
-.. figure:: ./images/nemr_dur_dist_synth.png
+.. figure:: ../../images/nemr_dur_dist_synth.png
     :width: 70%
     :align: center
     :name: nonemr_synth
@@ -55,7 +59,7 @@ in :numref:`nonemr_synth`
 
 The density of the duration of synthetic emergency call is given in :numref:`emr_synth`.
 
-.. figure:: ./images/emr_dur_dist_synth.png
+.. figure:: ../../images/emr_dur_dist_synth.png
     :width: 70%
     :align: center
     :name: emr_synth

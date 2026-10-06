@@ -1,11 +1,16 @@
-Introduction
-=============================
-The Police Communication Branch (PCB) deals with all 911 emergency and police non-emergency
-calls to provide a reliable and worthy service to residents of Edmonton.
-Processing calls and determining the exact required services for each individual call is
-a very sensitive, stressful and delicate work as some scenarios may involve lives of people.
+PCB workload-planning case study
+================================
 
-PCB's workflow consists of three different part:
+This section documents a historical application of the general scheduling
+library. It is an illustrative use case, not a description of the package's
+default purpose or operational guidance. The study used domain-specific
+assumptions and data supplied by its authors.
+
+The Police Communication Branch (PCB) handled emergency and police
+non-emergency calls. The study considered the workload transferred to police
+evaluation staff after an initial assessment by 911 operators.
+
+The workflow considered three stages:
 
   1. 911 primary call center
   2. Evaluation unit
@@ -15,38 +20,28 @@ The 911 primary operators take all the incoming calls and after an initial asses
 transfer the calls to the appropriate unit for further response. These units include
 Police Evaluation, EMS, Fire Department, and others.
 
-Police Evaluation Unit processes all emergency and non-emergency calls transferred through
-911 or the police non-emergency line. The workload for the evaluators becomes a serious
-issue as they have to make the most accurate decisions about each case, in some instances
-within seconds.
+The evaluation unit processes emergency and non-emergency calls. This case
+study asked how staffing levels and break schedules might affect the workload
+of evaluators at different times of day.
 
-Currently, the evaluation unit personnel work in 2, 12-hours long shifts, but the minimum
-requirement for various hours during a day changes. PCB is asking for an assessment of the
-minimum staffing requirement based on their existing data collected over years.
+The original analysis used historical aggregate data to estimate staffing
+requirements for 30-minute intervals. The estimates are specific to that
+dataset and its assumptions.
 
 Objective
 -----------------
-**Determine the minimum number of required evaluators at each hour of a day that can handle
-the workload efficiently.**
+**Estimate evaluator staffing levels that can handle the modeled workload across
+the day.**
 
-Currently, PCB plans the minimum staffing and their scheduled breaks for 30-minutes time
-intervals. Along the scheduled breaks, agents usually take short breaks between calls
-as well. Therefore, the model should include these breaks to mimic the real situation
-as much as possible.
+The model considered scheduled breaks as well as workload, using 30-minute
+time intervals.
 
 .. note::
 
-    The *utilization* of evaluators is another factor that is measures by PCB.
-    Clearly, it is desirable to maximize the utilization of agents as much as possible.
-    We note that *ASA* and *Utilization* are to competing objectives negatively
-    correlated. In other words, to decrease the ASA, PCB needs more agents. The average
-    duration of answered calls for each time slot can be determined from the data which
-    provide predetermined values. Increasing the number of agents decreases the ASA, but
-    increases the overall availability of resources, and hence decreases the average
-    utilization of agents.
-    At the same time, decreasing the number of agents, increases the ASA, but also
-    increases the utilization. Therefore, it is seems implausible to shoot for optimality
-    of both measures at the same time.
+    Average speed of answer (ASA) and resource utilization can conflict: adding
+    staff may reduce modeled waiting time while lowering utilization. The
+    analysis therefore considered both measures rather than treating either as
+    an unconditional objective.
 
 Limitations of Modeling
 -----------------------------
@@ -65,17 +60,16 @@ confirm each other, one could trust either as a reliable model based on their ne
 Also, different approaches may reveal different aspects of the problem that were hidden
 from the scope of the other existing solutions.
 
-Schedule Optimization
-----------------------------
+Scheduling fundamentals
+-----------------------
 In a scheduling problem we have to fulfill a set of tasks using a number of resources
 under certain constraints such as restrictions on the task completion times,
 priorities between task (one task cannot start until another one is finished), etc.
 The goal is to optimize some criterion, e.g, to minimize the total processing time,
 which is the completion time of the last task or to maximize the number of processed tasks.
 
-----------------------
-Scheduling Models
-----------------------
+Scheduling approaches
+---------------------
 There are various ways to come up with a scheduling method that affects the overall
 performance of the evaluation unit. Each method assumes certain routines on the evaluation
 side in terms of handling the calls. In what follows, we describe a few methods and later

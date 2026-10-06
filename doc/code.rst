@@ -1,17 +1,14 @@
 Code Documentation
 =================================
 
-.. automodule:: Task
+.. automodule:: scheduling.Task
    :members:
 
-.. automodule:: Visuals
+.. automodule:: scheduling.Visuals
    :members:
 
-.. automodule:: MultiMachine
+.. automodule:: scheduling.MultiMachine
    :members:
 
-.. automodule:: pcb
-   :members:
-
-.. automodule:: synthdat
+.. automodule:: scheduling.synthdat
    :members:
